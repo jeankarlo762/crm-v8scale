@@ -49,7 +49,7 @@ export default function LoginPage() {
       <div className="relative w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-10">
-          <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-red-900/40 p-3">
+          <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/40 p-3">
             <img src="/logo.png" alt="V8 Scale" className="w-full h-full object-contain" draggable={false} />
           </div>
           <div className="text-center">

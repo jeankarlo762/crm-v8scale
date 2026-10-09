@@ -13,8 +13,8 @@
   --divider: 240 240 242;
   --fg: 17 24 39;
   --fg-muted: 75 85 99;
-  --primary-soft: 254 226 226;
-  --primary-soft-fg: 127 29 29;
+  --primary-soft: 217 234 255;
+  --primary-soft-fg: 0 63 143;
   --overlay: 0 0 0;
 
   --tone-green-bg: 220 252 231;  --tone-green-fg: 20 83 45;   --tone-green-solid: 21 128 61;
@@ -37,8 +37,8 @@
   --divider: 31 31 35;
   --fg: 243 244 246;
   --fg-muted: 156 163 175;
-  --primary-soft: 69 10 10;
-  --primary-soft-fg: 254 202 202;
+  --primary-soft: 0 44 102;
+  --primary-soft-fg: 179 212 255;
   --overlay: 0 0 0;
 
   --tone-green-bg: 20 60 38;     --tone-green-fg: 187 247 208;  --tone-green-solid: 21 128 61;
