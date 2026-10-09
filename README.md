@@ -65,6 +65,18 @@ O admin só é criado se o banco ainda não tiver nenhum usuário, e o seed **re
 
 Para gerar segredos: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
 
+### Criar o admin sem variáveis de ambiente
+
+Em vez do `SEED_ADMIN_*`, dá para criar (ou redefinir a senha de) um administrador direto no banco, rodando o script
+dentro do container do backend no Railway:
+
+```bash
+cd backend
+railway ssh -s backend -e production -- node - voce@empresa.com SuaSenha123 --nome "Seu Nome" < scripts/create-admin.cjs
+```
+
+A senha segue a mesma política do app (mínimo 8 caracteres, letras e números, senhas óbvias bloqueadas; `--force` ignora o bloqueio).
+
 ### Qualidade
 
 ```bash
