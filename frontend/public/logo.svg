@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 440" role="img" aria-label="V8 Scale">
+  <!-- Placeholder da marca V8 Scale: "V8" em vermelho, fundo transparente. Substituir pela arte final. -->
+  <g fill="#B80000" fill-rule="evenodd">
+    <path d="M20 20 H80 L160 300 L240 20 H300 L190 420 H130 Z"/>
+    <path d="M470 20 C 390 20 350 60 350 120 C 350 160 370 190 405 210 C 362 230 340 265 340 310 C 340 380 390 420 470 420 C 550 420 600 380 600 310 C 600 265 578 230 535 210 C 570 190 590 160 590 120 C 590 60 550 20 470 20 Z M470 70 C 510 70 535 90 535 125 C 535 160 510 180 470 180 C 430 180 405 160 405 125 C 405 90 430 70 470 70 Z M470 230 C 515 230 545 255 545 300 C 545 345 515 370 470 370 C 425 370 395 345 395 300 C 395 255 425 230 470 230 Z"/>
+  </g>
+</svg>

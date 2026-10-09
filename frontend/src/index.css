@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Tokens de cor semânticos (tema claro/escuro) ────────────────────────────
+   Canais RGB pra permitir opacidade no Tailwind (bg-surface/60). Componentes
+   usam só estes tokens (bg-surface, text-fg, border-border, bg-tone-green-bg...). */
+:root {
+  --background: 247 247 248;
+  --surface: 255 255 255;
+  --surface-hover: 241 241 243;
+  --border: 231 231 234;
+  --divider: 240 240 242;
+  --fg: 17 24 39;
+  --fg-muted: 75 85 99;
+  --primary-soft: 254 226 226;
+  --primary-soft-fg: 127 29 29;
+  --overlay: 0 0 0;
+
+  --tone-green-bg: 220 252 231;  --tone-green-fg: 20 83 45;   --tone-green-solid: 21 128 61;
+  --tone-amber-bg: 254 243 199;  --tone-amber-fg: 120 53 15;  --tone-amber-solid: 180 83 9;
+  --tone-orange-bg: 255 237 213; --tone-orange-fg: 124 45 18; --tone-orange-solid: 194 65 12;
+  --tone-red-bg: 254 226 226;    --tone-red-fg: 127 29 29;    --tone-red-solid: 185 28 28;
+  --tone-sky-bg: 224 242 254;    --tone-sky-fg: 12 74 110;    --tone-sky-solid: 3 105 161;
+  --tone-blue-bg: 219 234 254;   --tone-blue-fg: 30 58 138;   --tone-blue-solid: 29 78 216;
+  --tone-indigo-bg: 224 231 255; --tone-indigo-fg: 49 46 129; --tone-indigo-solid: 67 56 202;
+  --tone-purple-bg: 243 232 255; --tone-purple-fg: 88 28 135; --tone-purple-solid: 126 34 206;
+  --tone-slate-bg: 226 232 240;  --tone-slate-fg: 51 65 85;   --tone-slate-solid: 71 85 105;
+  --tone-gray-bg: 243 244 246;   --tone-gray-fg: 55 65 81;    --tone-gray-solid: 55 65 81;
+  --tone-pink-bg: 252 231 243;   --tone-pink-fg: 131 24 67;   --tone-pink-solid: 190 24 93;
+}
+.dark {
+  --background: 11 11 13;
+  --surface: 20 20 23;
+  --surface-hover: 28 28 33;
+  --border: 38 38 43;
+  --divider: 31 31 35;
+  --fg: 243 244 246;
+  --fg-muted: 156 163 175;
+  --primary-soft: 69 10 10;
+  --primary-soft-fg: 254 202 202;
+  --overlay: 0 0 0;
+
+  --tone-green-bg: 20 60 38;     --tone-green-fg: 187 247 208;  --tone-green-solid: 21 128 61;
+  --tone-amber-bg: 69 47 8;      --tone-amber-fg: 253 230 138;  --tone-amber-solid: 180 83 9;
+  --tone-orange-bg: 76 36 12;    --tone-orange-fg: 254 215 170; --tone-orange-solid: 194 65 12;
+  --tone-red-bg: 76 20 24;       --tone-red-fg: 254 202 202;    --tone-red-solid: 185 28 28;
+  --tone-sky-bg: 12 52 80;       --tone-sky-fg: 186 230 253;    --tone-sky-solid: 3 105 161;
+  --tone-blue-bg: 23 37 84;      --tone-blue-fg: 191 219 254;   --tone-blue-solid: 29 78 216;
+  --tone-indigo-bg: 35 32 90;    --tone-indigo-fg: 199 210 254; --tone-indigo-solid: 67 56 202;
+  --tone-purple-bg: 59 25 88;    --tone-purple-fg: 233 213 255; --tone-purple-solid: 126 34 206;
+  --tone-slate-bg: 40 50 66;     --tone-slate-fg: 203 213 225;  --tone-slate-solid: 71 85 105;
+  --tone-gray-bg: 38 46 60;      --tone-gray-fg: 209 213 219;   --tone-gray-solid: 55 65 81;
+  --tone-pink-bg: 80 7 36;       --tone-pink-fg: 251 207 232;   --tone-pink-solid: 190 24 93;
+}
+
+.dark { color-scheme: dark; }
+:where(.dark) select option, :where(.dark) select optgroup { background-color: rgb(var(--surface)); color: rgb(var(--fg)); }
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+  background-color: rgb(var(--background));
+  color: rgb(var(--fg));
+}
+
+.dark body {
+  color-scheme: dark;
+}
+
+/* ── Rolagem horizontal visível ─────────────────────────────────────────────
+   Toda área que rola pro lado (tabelas, Kanban) mostra uma barra fina e
+   colorida — assim o usuário SABE que dá pra deslizar na horizontal. */
+.overflow-x-auto,
+.scroll-x {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(184, 0, 0, 0.55) rgba(0, 0, 0, 0.06);
+  -webkit-overflow-scrolling: touch;
+}
+.overflow-x-auto::-webkit-scrollbar,
+.scroll-x::-webkit-scrollbar { height: 9px; }
+.overflow-x-auto::-webkit-scrollbar-track,
+.scroll-x::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); border-radius: 999px; }
+.overflow-x-auto::-webkit-scrollbar-thumb,
+.scroll-x::-webkit-scrollbar-thumb { background: rgba(184, 0, 0, 0.5); border-radius: 999px; }
+.overflow-x-auto::-webkit-scrollbar-thumb:hover,
+.scroll-x::-webkit-scrollbar-thumb:hover { background: rgba(184, 0, 0, 0.75); }
+.dark .overflow-x-auto,
+.dark .scroll-x { scrollbar-color: rgba(255, 90, 82, 0.6) rgba(255, 255, 255, 0.08); }

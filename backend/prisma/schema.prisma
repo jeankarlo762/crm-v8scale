@@ -1,0 +1,434 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Acesso ──────────────────────────────────────────────────────────────────
+
+// role: ADMIN (tudo) | MANAGER (vê e gerencia todo o comercial) | SELLER (só os próprios leads)
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         String   @default("SELLER")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  leads         Lead[]
+  activities    Activity[]
+  tasks         Task[]
+  refreshTokens RefreshToken[]
+
+  campaigns    Campaign[]
+  goals        Goal[] @relation("GoalOwner")
+  goalsCreated Goal[] @relation("GoalCreator")
+}
+
+// Metas do Comercial. metric: WON_VALUE (R$ ganhos) | WON_COUNT (negócios ganhos) | LEADS_CREATED | ACTIVITIES
+// (contatos registrados). ownerId nulo = meta da equipe toda. O progresso é calculado na hora a partir dos leads.
+model Goal {
+  id          String   @id @default(cuid())
+  title       String?
+  metric      String
+  target      Decimal
+  periodStart DateTime
+  periodEnd   DateTime
+  ownerId     String?
+  owner       User?    @relation("GoalOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdById String?
+  createdBy   User?    @relation("GoalCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([periodStart, periodEnd])
+  @@index([ownerId])
+}
+
+// Refresh tokens guardados (hash SHA-256) para sobreviver a deploys e permitir revogação no logout.
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─── Comercial ───────────────────────────────────────────────────────────────
+
+// Etapas do funil (configuráveis). kind: OPEN | WON | LOST
+model Stage {
+  id        String   @id @default(cuid())
+  name      String
+  color     String   @default("#64748b")
+  position  Int      @default(0)
+  kind      String   @default("OPEN")
+  createdAt DateTime @default(now())
+
+  leads Lead[]
+
+  @@index([position])
+}
+
+model Lead {
+  id             String    @id @default(cuid())
+  name           String // empresa / nome do lead
+  contactName    String?
+  email          String?
+  phone          String?
+  document       String? // CPF/CNPJ
+  city           String?
+  state          String?
+  source         String? // origem: Indicação, Instagram, Google, ...
+  segment        String? // segmento de atuação do lead
+  value          Decimal   @default(0)
+  notes          String?
+  lostReason     String?
+  archived       Boolean   @default(false)
+  expectedCloseAt DateTime?
+
+  stageId        String
+  stage          Stage     @relation(fields: [stageId], references: [id])
+  stageChangedAt DateTime  @default(now())
+  ownerId        String?
+  owner          User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  customer   Customer?
+  activities Activity[]
+  tasks      Task[]
+  prospect   Prospect? // origem na Prospecção, quando o lead veio de lá
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([stageId])
+  @@index([ownerId])
+  @@index([createdAt])
+}
+
+// type: NOTE | CALL | WHATSAPP | EMAIL | MEETING | STAGE_CHANGE
+model Activity {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type      String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([leadId, createdAt])
+}
+
+model Task {
+  id         String    @id @default(cuid())
+  title      String
+  dueAt      DateTime
+  done       Boolean   @default(false)
+  doneAt     DateTime?
+  leadId     String?
+  lead       Lead?     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  assigneeId String?
+  assignee   User?     @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+
+  @@index([assigneeId, done, dueAt])
+  @@index([leadId])
+}
+
+// Criado automaticamente quando um lead entra numa etapa do tipo WON.
+model Customer {
+  id          String   @id @default(cuid())
+  leadId      String   @unique
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  name        String
+  contactName String?
+  email       String?
+  phone       String?
+  document    String?
+  mrrValue    Decimal  @default(0)
+  // Taxa de implantação (receita única, contada na data em que virou cliente) e situação da assinatura.
+  // Cliente inativo (cancelou) sai da receita recorrente mas continua no histórico; churnedAt marca quando saiu.
+  setupFee    Decimal  @default(0)
+  active      Boolean  @default(true)
+  churnedAt   DateTime?
+  // Arquivado: sai da lista de Clientes (vai para Clientes arquivados) e fica inativo. Se o arquivamento inativou o
+  // cliente, churnedAt == archivedAt, e é isso que permite reativar ao desarquivar sem mexer em quem já tinha cancelado antes.
+  archivedAt     DateTime?
+  archiveReason  String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([archivedAt])
+}
+
+// ─── Prospecção e Campanhas ──────────────────────────────────────────────────
+
+// Aba (nicho de negócio) da Prospecção: "Concessionária Fiat", "Multimarcas seminovos"...
+// Cada nicho tem a sua própria lista de prospects.
+model Nicho {
+  id        String     @id @default(cuid())
+  nome      String     @unique
+  termosBusca String[] @default([]) // aliases de busca no Google Places (além do próprio nome); vazio = só o nome
+  createdAt DateTime   @default(now())
+  leads     Prospect[]
+  campaigns Campaign[]
+}
+
+model Prospect {
+  id            String   @id @default(cuid())
+  placeId       String?  @unique
+  nichoId       String?
+  nicho         Nicho?   @relation(fields: [nichoId], references: [id], onDelete: Cascade)
+  arenaName     String   // nome do estabelecimento (nome de coluna herdado do código de origem)
+  state         String?
+  city          String?
+  address       String?
+  addressComponents Json? // addressComponents do Places (New): usado pra confirmar a cidade no enriquecimento
+  contactName   String?
+  whatsapp      String?
+  phoneE164     String?  // E.164 (libphonenumber-js): número usado na Campanha
+  phoneCountry  String?  // BR, AR...
+  phoneMobile   Boolean? // celular por regra do país (pode ter WhatsApp)
+  ownerGroupId  String?  // leads com o mesmo telefone (placeIds diferentes) = mesmo dono; null quando único
+  instagram     String?
+  website       String?
+  destinoReal   String?
+  statusSite    String   @default("sem_site")
+  siteUrl       String?
+  linksEncontrados Json?
+  fonte         String?
+  verificadoEm  DateTime?
+  siteStatus       String?   // saúde do site do Google: ok | fora_do_ar | sem_https | dominio_parado
+  instagramHandle  String?
+  foundWebsite     String?   // site achado via busca web (não cadastrado no Google)
+  foundSiteStatus  String?
+  instagramVerificar Boolean @default(false) // @ sugerido: nome bateu, cidade não (confirmar)
+  foundWebsiteVerificar Boolean @default(false)
+  foundWebsiteSource String? // 'busca' | 'link_na_bio'
+  enrichedAt       DateTime?
+  enrichError      String?   // última tentativa de enriquecimento falhou por erro técnico (retentada na próxima leva)
+  instagramFollowers          Int?      // Business Discovery (Instagram Graph API)
+  instagramMediaCount         Int?
+  businessDiscoveryCheckedAt  DateTime? // cache de 30 dias da consulta
+  siteCheckReason  String?   // motivo do resultado do health check do site do Google
+  foundSiteCheckReason String? // idem, do site achado via busca
+  instagramManual  Boolean   @default(false) // @ informado à mão: buscas futuras não sobrescrevem
+  siteManual       Boolean   @default(false) // site (foundWebsite) informado à mão: idem
+  // Decisão em camadas sobre "tem site próprio?": ausência de evidência ≠ sem site (null = ainda não classificado = UNKNOWN).
+  confirmedWebsite String?   // site que passou pela validação de identidade (google ou descoberto)
+  websiteStatus    String?   // HAS_WEBSITE | PROBABLY_NO_WEBSITE | SOCIAL_ONLY | UNKNOWN | CONFLICT
+  websiteConfidence Float?   // 0..1
+  websiteEvidence  Json?     // [{ source, type, value, confidence }] compacto, sem HTML/respostas de API
+  websiteDecidedAt DateTime?
+  websiteReason    String?   // motivo principal da decisão (código), pra UI
+  websiteCoverage  Json?     // cobertura da investigação: fontes, consultas, candidatos pendentes (heurístico, não calibrado)
+  websiteConfirmation Json?  // confirmação de site: { url, valid, source, confirmedAt, revalidatedAt, evidence[], history[] }
+  classifierVersion String?  // versão do classificador que gerou a decisão
+  websiteOutcome   String?   // FINAL | INCOMPLETE | NEEDS_REVIEW | LEGACY: situação da investigação ATUAL (a decisão antiga pode ser só histórico)
+  websiteValidUntil DateTime? // até quando as evidências que sustentam uma conclusão negativa continuam vigentes (menor validade entre elas)
+  // Andamento operacional da investigação (separado da decisão). null = lead legado, nunca enfileirado.
+  // PENDING | PROCESSING | WAITING_QUOTA | WAITING_RETRY | DONE | MANUAL_REVIEW
+  investigationState     String?
+  investigationNextAction String?  // próxima etapa: GOOGLE_URL | LINK_RESOLVE | META_BIO | TAVILY_NAME | TAVILY_PHONE | TAVILY_HANDLE | TAVILY_ADDRESS | RECOMPUTE | MANUAL_REVIEW
+  investigationAttempts  Int       @default(0)
+  investigationNextRunAt DateTime?
+  investigationWaitReason String?
+  investigationLastError String?
+  investigationLockedBy  String?
+  investigationLockedUntil DateTime?
+  investigationLockToken String?   // token único POR CLAIM: só quem o detém renova a lease, grava evidência e fecha a execução
+  investigationForceAt   DateTime? // reverificar: refaz etapas coletadas antes deste instante, mas NUNCA ignora orçamento
+  investigationPriority  Float     @default(0)
+  leadScore        Float     @default(0)
+  avaliacao     Float?
+  numAvaliacoes Int?
+  googleMapsUrl String?
+  primaryType   String?   // tipo principal do lugar (Text Search Pro): ajuda a priorizar o Place Details Enterprise
+  sports        String?
+  courtsInfo    String?
+  currentSystem String?
+  status        String   @default("nao_contatado")
+  notes         String?
+  responsavel   String?  // id do User responsável (ADMIN/MANAGER/SELLER); null = sem responsável
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  // Conversão: prospect vira Lead do funil (uma vez só); o prospect continua existindo com status 'negociando'/'fechado'.
+  convertedLeadId String? @unique
+  convertedLead   Lead?   @relation(fields: [convertedLeadId], references: [id], onDelete: SetNull)
+  campaignRecipients CampaignRecipient[]
+  evidences    LeadEvidence[]
+
+  @@index([status])
+  @@index([state])
+  @@index([investigationState, investigationNextRunAt])
+  @@index([nichoId, websiteStatus])
+  @@index([nichoId, statusSite])
+  @@index([ownerGroupId])
+  @@index([nichoId, leadScore])
+}
+
+
+// Log de buscas no Google Places (para avisar busca repetida e medir consumo).
+model BuscaLog {
+  id          String   @id @default(cuid())
+  nichoId     String   @map("nicho_id")
+  cidade      String
+  numChamadas Int      @default(1) @map("num_chamadas")
+  mock        Boolean  @default(false)
+  criadoEm    DateTime @default(now()) @map("criado_em")
+
+  @@index([nichoId, cidade, criadoEm])
+  @@index([criadoEm])
+  @@map("buscas_log")
+}
+
+// status: DRAFT | RUNNING | PAUSED | DONE
+model Campaign {
+  id            String              @id @default(cuid())
+  name          String
+  // JSON string[] — variações da mensagem; cada destinatário recebe uma escolhida aleatoriamente.
+  messages      String
+  targetStatus  String
+  nichoId       String?
+  nicho         Nicho?              @relation(fields: [nichoId], references: [id], onDelete: SetNull)
+  nichoNome     String? // snapshot do nome do nicho na criação
+  estado        String?
+  cidade        String?
+  limite        Int?
+  // todos | sem_site | legacy_unverified. 'sem_site' reavalia a elegibilidade de cada lead NO MOMENTO do envio.
+  publico       String              @default("legacy_unverified")
+  // true = leads escolhidos um a um na Prospecção (os filtros acima não valem; a lista de destinatários é a seleção).
+  selecionados  Boolean             @default(false)
+  // Usuário responsável pela campanha: os prospects contatados herdam (quando ainda não tinham) e o lead do funil nasce com ele.
+  responsavelId String?
+  responsavel   User?               @relation(fields: [responsavelId], references: [id], onDelete: SetNull)
+  delayMinSec   Int                 @default(5)
+  delayMaxSec   Int                 @default(15)
+  status        String              @default("DRAFT")
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  recipients    CampaignRecipient[]
+}
+
+// status: PENDING | SENT | FAILED | SKIPPED
+model CampaignRecipient {
+  id          String    @id @default(cuid())
+  campaignId  String
+  campaign    Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  prospectId  String?
+  prospect    Prospect? @relation(fields: [prospectId], references: [id], onDelete: SetNull)
+  name        String
+  phone       String
+  status      String    @default("PENDING")
+  messageUsed String?
+  sentAt      DateTime?
+  error       String?
+  skipReason  String?
+  // Resposta do contato no WhatsApp da campanha (capturada ao receber a mensagem; não guarda o texto).
+  repliedAt    DateTime?
+  lastReplyAt  DateTime?
+  replyCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@index([campaignId])
+  @@index([campaignId, status])
+  @@index([status, sentAt])
+}
+
+// Sessão do WhatsApp (Baileys) persistida no banco. tenantId é a chave da sessão ("campaign-broadcast").
+model WhatsAppAuth {
+  tenantId String
+  id       String
+  value    String
+
+  @@id([tenantId, id])
+}
+
+// Falhas de envio (WhatsApp) registradas para o admin ver depois.
+model SystemAlert {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  channel   String // WHATSAPP | EMAIL
+  context   String
+  recipient String?
+  message   String?
+  error     String?
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, resolved])
+}
+
+// Evidências coletadas na investigação de site de cada prospect.
+model LeadEvidence {
+  id          String   @id @default(cuid())
+  prospectId  String
+  prospect    Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  source      String
+  type        String
+  key         String
+  value       Json
+  outcome     String?
+  fromCache   Boolean  @default(false)
+  collectedAt DateTime @default(now())
+  dependsOn   String   @default("")
+  version     String   @default("")
+  updatedAt   DateTime @updatedAt
+
+  @@unique([prospectId, source, type, key])
+  @@index([prospectId])
+}
+
+// Cache, orçamento e estado dos provedores externos (Google Places, Tavily, Meta).
+model ApiCache {
+  key           String    @id
+  provider      String
+  operation     String
+  outcome       String?
+  response      Json?
+  collectedAt   DateTime?
+  expiresAt     DateTime?
+  inFlightUntil DateTime?
+  claimToken    String?
+  updatedAt     DateTime  @updatedAt
+
+  @@index([provider, expiresAt])
+}
+
+model ApiQuotaConfig {
+  provider    String   @id
+  fingerprint String
+  history     Json     @default("[]")
+  updatedAt   DateTime @updatedAt
+}
+
+model ProviderState {
+  provider  String   @id
+  status    String   @default("ACTIVE") // ACTIVE | PAUSED_AUTH
+  reason    String?
+  since     DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ApiUsage {
+  key       String   @id
+  provider  String
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@index([provider])
+}
