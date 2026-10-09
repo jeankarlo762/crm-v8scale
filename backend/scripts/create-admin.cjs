@@ -7,7 +7,10 @@
 // Localmente (com backend/.env e `npm run build` feitos): node scripts/create-admin.cjs EMAIL SENHA
 // --force: aceita uma senha que a política do app bloquearia (não recomendado).
 const { PrismaClient } = require('@prisma/client')
-const { hashPassword, isBlockedPassword } = require('../dist/utils/password')
+const path = require('path')
+// Via stdin (node -) o __dirname é '.', então resolve a partir da pasta atual (raiz do backend).
+const backendRoot = __filename === '[stdin]' ? process.cwd() : path.resolve(__dirname, '..')
+const { hashPassword, isBlockedPassword } = require(path.join(backendRoot, 'dist/utils/password'))
 
 const args = process.argv.slice(2)
 const flags = new Set(args.filter((a) => a.startsWith('--') && a !== '--nome'))
