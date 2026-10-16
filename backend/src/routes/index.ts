@@ -10,6 +10,9 @@ import { leadRoutes as prospectRoutes, nichoRoutes } from './lead.routes'
 import { campaignRoutes } from './campaign.routes'
 import { goalRoutes } from './goals.routes'
 import { reportRoutes } from './reports.routes'
+import { financialRoutes } from './financial.routes'
+import { contractRoutes } from './contracts.routes'
+import { zapsignConfigRoutes, zapsignWebhookRoutes } from './zapsign.routes'
 
 // Cada módulo novo entra aqui com o seu próprio prefixo (ex.: /api/<modulo>),
 // mantendo auth/usuários compartilhados.
@@ -32,4 +35,10 @@ export async function registerRoutes(app: FastifyInstance) {
 
   // ── Relatórios (ADMIN/MANAGER) ──
   app.register(reportRoutes, { prefix: '/api/reports' })
+
+  // ── Financeiro e Contratos (ADMIN/MANAGER) ──
+  app.register(financialRoutes, { prefix: '/api/financial' })
+  app.register(contractRoutes, { prefix: '/api/contracts' })
+  app.register(zapsignConfigRoutes, { prefix: '/api/integrations/zapsign' })
+  app.register(zapsignWebhookRoutes, { prefix: '/api/zapsign' })
 }

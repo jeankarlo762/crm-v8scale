@@ -1,7 +1,7 @@
 # CRM V8 Scale
 
-CRM da V8 Scale (tráfego pago para concessionárias), com dois módulos: **Comercial** e **Prospecção**.
-Derivado do CRM interno do Grupo MK, sem os módulos Suporte, Financeiro e a integração com o ArenaHub.
+CRM da V8 Scale (tráfego pago para concessionárias), com os módulos **Comercial**, **Prospecção**, **Financeiro** e **Contratos**.
+Derivado do CRM interno do Grupo MK, sem o módulo Suporte e a integração com o ArenaHub.
 
 ## Stack
 
@@ -33,6 +33,16 @@ Derivado do CRM interno do Grupo MK, sem os módulos Suporte, Financeiro e a int
 
 **Atenção com o Baileys**: é WhatsApp Web não oficial; o número pode ser bloqueado pelo WhatsApp. Só uma instância do
 backend pode rodar (a sessão e o loop de envio ficam em memória).
+
+### Financeiro e Contratos (ADMIN/MANAGER)
+
+- **Financeiro**: MRR, ARR, ticket médio, implantação, novos clientes e cancelamentos do período; evolução do MRR em 12 meses,
+  MRR por vendedor e faturamento por cliente (exportação CSV). Calculado a partir dos Clientes (mensalidade e implantação)
+- **Contratos**: gera o contrato em PDF (cláusulas padrão de gestão de tráfego pago ou texto próprio), a partir de um cliente
+  do CRM ou preenchido à mão; envia para assinatura pelo **ZapSign** (e-mail/WhatsApp), com baixa automática pelo webhook ou
+  baixa manual; rascunho é editável, enviado só pode ser cancelado. Atalho "Gerar contrato" na edição do cliente
+- **Integrações** (ADMIN): token do ZapSign (criptografado no banco com `ENCRYPTION_KEY`) e a URL do webhook a cadastrar no ZapSign
+- Dados da contratada no PDF: `CONTRACT_COMPANY_NAME`, `CONTRACT_COMPANY_DOCUMENT`, `CONTRACT_COMPANY_ADDRESS`, `CONTRACT_COMPANY_CITY`
 
 ### Perfis
 

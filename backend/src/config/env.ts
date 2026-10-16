@@ -20,6 +20,19 @@ const envSchema = z.object({
   SEED_ADMIN_EMAIL: z.preprocess(blankToUndefined, z.string().email().optional()),
   SEED_ADMIN_PASSWORD: z.preprocess(blankToUndefined, z.string().min(8).optional()),
 
+  // ── Contratos ──
+  // Chave dos segredos guardados no banco (token do ZapSign). Sem ela, usa o JWT_SECRET; definir uma dedicada
+  // permite rotacionar o JWT_SECRET sem perder os tokens já salvos.
+  ENCRYPTION_KEY: z.preprocess(blankToUndefined, z.string().min(32).optional()),
+  // Token do ZapSign por variável (opcional; o normal é salvar pela tela Integrações).
+  ZAPSIGN_API_TOKEN: z.preprocess(blankToUndefined, z.string().optional()),
+  ZAPSIGN_BASE_URL: z.preprocess(blankToUndefined, z.string().url().default('https://api.zapsign.com.br/api/v1')),
+  // Dados da CONTRATADA impressos no PDF do contrato.
+  CONTRACT_COMPANY_NAME: z.preprocess(blankToUndefined, z.string().default('V8 Scale')),
+  CONTRACT_COMPANY_DOCUMENT: z.preprocess(blankToUndefined, z.string().optional()),
+  CONTRACT_COMPANY_ADDRESS: z.preprocess(blankToUndefined, z.string().optional()),
+  CONTRACT_COMPANY_CITY: z.preprocess(blankToUndefined, z.string().optional()),
+
 
   // ── Prospecção (Google Places, Tavily, Meta) e investigação de site ──────────────────────────────────
   // Orçamento INTERNO das APIs externas. SEM default de franquia: sem a janela obrigatória (api-quota.service.ts →

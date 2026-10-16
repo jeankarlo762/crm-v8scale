@@ -18,6 +18,9 @@ import ProspeccaoPage from './pages/Prospeccao'
 import CampanhasPage from './pages/Campanhas'
 import MetasPage from './pages/Metas'
 import RelatoriosPage from './pages/Relatorios'
+import FinanceiroPage from './pages/Financeiro'
+import ContratosPage from './pages/Contratos'
+import IntegracoesPage from './pages/Integracoes'
 import UsersPage from './pages/Users'
 import SettingsPage from './pages/Settings'
 import AccountPage from './pages/Account'
@@ -84,10 +87,13 @@ export default function App() {
           <Route path="/prospeccao" element={<RequireAuth roles={['ADMIN', 'MANAGER']}><ProspeccaoPage /></RequireAuth>} />
           <Route path="/campanhas" element={<RequireAuth roles={['ADMIN', 'MANAGER']}><CampanhasPage /></RequireAuth>} />
           <Route path="/metas" element={<MetasPage />} />
+          <Route path="/financeiro" element={<RequireAuth roles={['ADMIN', 'MANAGER']}><FinanceiroPage /></RequireAuth>} />
+          <Route path="/contratos" element={<RequireAuth roles={['ADMIN', 'MANAGER']}><ContratosPage /></RequireAuth>} />
           <Route path="/relatorios" element={<RequireAuth roles={['ADMIN', 'MANAGER']}><RelatoriosPage /></RequireAuth>} />
           <Route path="/minha-conta" element={<AccountPage />} />
           <Route path="/usuarios" element={<RequireAuth roles={['ADMIN']}><UsersPage /></RequireAuth>} />
           <Route path="/configuracoes" element={<RequireAuth roles={['ADMIN']}><SettingsPage /></RequireAuth>} />
+          <Route path="/integracoes" element={<RequireAuth roles={['ADMIN']}><IntegracoesPage /></RequireAuth>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

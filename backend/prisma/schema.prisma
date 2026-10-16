@@ -171,7 +171,58 @@ model Customer {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  contracts Contract[]
+
   @@index([archivedAt])
+}
+
+// ─── Contratos (geração em PDF + assinatura via ZapSign) ─────────────────────
+
+// status: DRAFT (rascunho, editável) | SENT (enviado ao ZapSign, aguardando) | SIGNED | CANCELLED.
+// Os dados do contratante são copiados para o contrato (o documento não muda se o cadastro do cliente mudar depois).
+model Contract {
+  id             String    @id @default(cuid())
+  customerId     String?
+  customer       Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  clientName     String
+  clientDocument String? // CPF/CNPJ
+  clientEmail    String? // recebe o link de assinatura
+  clientPhone    String? // recebe o link por WhatsApp (ZapSign)
+  clientAddress  String?
+  title          String    @default("Contrato de Prestação de Serviços")
+  serviceObject  String? // objeto do contrato; vazio usa o texto padrão
+  monthlyValue   Decimal   @default(0)
+  setupFee       Decimal   @default(0)
+  paymentDay     Int? // dia do vencimento (1-31)
+  startDate      DateTime?
+  durationMonths Int? // vigência em meses; vazio = prazo indeterminado
+  bodyText       String? // cláusulas personalizadas; vazio usa o modelo padrão
+  notes          String?
+  status         String    @default("DRAFT")
+  signed         Boolean   @default(false)
+  signedAt       DateTime?
+  cancelledAt    DateTime?
+  zapsignToken   String?
+  signUrl        String?
+  signedPdfUrl   String?
+  createdById    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status])
+  @@index([customerId])
+  @@index([zapsignToken])
+  @@index([createdAt])
+}
+
+// Configuração única do ZapSign (id = "default"). Token e segredo do webhook ficam criptografados.
+model ZapSignConfig {
+  id               String   @id @default("default")
+  apiTokenEnc      String?
+  webhookSecretEnc String?
+  sandbox          Boolean  @default(false)
+  active           Boolean  @default(true)
+  updatedAt        DateTime @updatedAt
 }
 
 // ─── Prospecção e Campanhas ──────────────────────────────────────────────────

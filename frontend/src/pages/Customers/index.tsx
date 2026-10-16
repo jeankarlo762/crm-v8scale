@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Archive, Search } from 'lucide-react'
+import { Archive, FileSignature, Search } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { Badge } from '../../components/ui/Badge'
 import { useAuthStore } from '../../store/auth.store'
 import { PageHeader } from '../../components/layout/AppLayout'
@@ -27,6 +28,7 @@ export default function CustomersPage() {
   const [archiveReason, setArchiveReason] = useState('')
   const [archiveBusy, setArchiveBusy] = useState(false)
   const canManage = useAuthStore((s) => s.hasRole('ADMIN', 'MANAGER'))
+  const navigate = useNavigate()
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search.trim()), 300)
@@ -166,6 +168,11 @@ export default function CustomersPage() {
             {canManage && (
               <Button variant="secondary" className="mr-auto" onClick={() => { setArchiveReason(''); setArchiving(true) }} disabled={saving}>
                 <Archive size={15} className="mr-1.5" />Arquivar
+              </Button>
+            )}
+            {canManage && editing && (
+              <Button variant="secondary" onClick={() => navigate(`/contratos?cliente=${editing.id}`)} disabled={saving}>
+                <FileSignature size={15} className="mr-1.5" />Gerar contrato
               </Button>
             )}
             <Button variant="secondary" onClick={() => setEditing(null)} disabled={saving}>Cancelar</Button>

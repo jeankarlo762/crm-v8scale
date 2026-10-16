@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Kanban, Users, CheckSquare, UserCheck, UsersRound, Settings, Target, Megaphone, Trophy, BarChart3, Archive, type LucideIcon,
+  LayoutDashboard, Kanban, Users, CheckSquare, UserCheck, UsersRound, Settings, Target, Megaphone, Trophy, BarChart3, Archive, Wallet, FileSignature, Plug, type LucideIcon,
 } from 'lucide-react'
 import type { Role } from '../types'
 
@@ -41,6 +41,13 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
+    title: 'Financeiro',
+    items: [
+      { to: '/financeiro', icon: Wallet, label: 'Financeiro', roles: ['ADMIN', 'MANAGER'] },
+      { to: '/contratos', icon: FileSignature, label: 'Contratos', roles: ['ADMIN', 'MANAGER'] },
+    ],
+  },
+  {
     title: 'Relatórios',
     items: [
       { to: '/relatorios', icon: BarChart3, label: 'Relatórios', roles: ['ADMIN', 'MANAGER'] },
@@ -51,6 +58,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { to: '/usuarios', icon: UsersRound, label: 'Usuários', roles: ['ADMIN'] },
       { to: '/configuracoes', icon: Settings, label: 'Configurações', roles: ['ADMIN'] },
+      { to: '/integracoes', icon: Plug, label: 'Integrações', roles: ['ADMIN'] },
     ],
   },
 ]
