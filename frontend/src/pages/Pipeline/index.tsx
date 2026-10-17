@@ -4,7 +4,7 @@ import {
   DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors,
   type DragEndEvent, type DragStartEvent,
 } from '@dnd-kit/core'
-import { Plus, Search, CheckSquare, Clock } from 'lucide-react'
+import { Plus, Search, CheckSquare, Clock, Bot, UserCheck } from 'lucide-react'
 import { PageHeader } from '../../components/layout/AppLayout'
 import { Button } from '../../components/ui/Button'
 import { Spinner } from '../../components/ui/Spinner'
@@ -14,12 +14,13 @@ import { LeadFormModal } from '../../components/LeadFormModal'
 import { LostReasonModal } from '../../components/LostReasonModal'
 import { useCommercialData } from '../../hooks/useCommercialData'
 import * as api from '../../api/commercial.api'
+import * as aiApi from '../../api/ai.api'
 import { errMsg } from '../../utils/apiError'
 import { cn } from '../../utils/cn'
 import { daysSince, formatCompactCurrency, formatCurrency, initials } from '../../utils/format'
 import type { Lead, Stage } from '../../types'
 
-function LeadCardView({ lead, dragging }: { lead: Lead; dragging?: boolean }) {
+function LeadCardView({ lead, dragging, onAssume }: { lead: Lead; dragging?: boolean; onAssume?: (lead: Lead) => void }) {
   const days = daysSince(lead.stageChangedAt)
   return (
     <div
@@ -28,7 +29,15 @@ function LeadCardView({ lead, dragging }: { lead: Lead; dragging?: boolean }) {
         dragging ? 'shadow-lg rotate-1' : 'hover:shadow-md',
       )}
     >
-      <p className="text-sm font-semibold text-fg truncate">{lead.name}</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-fg truncate">{lead.name}</p>
+        {lead.aiActive && (
+          <span className="inline-flex items-center gap-1 shrink-0 text-[10px] font-semibold text-violet-700 bg-violet-100 dark:bg-violet-900/30 dark:text-violet-300 rounded-full px-1.5 py-0.5" title="A IA está respondendo este lead no WhatsApp">
+            <Bot size={11} />IA
+          </span>
+        )}
+      </div>
+      {lead.aiActive && lead.aiQualification?.ready && <p className="text-[11px] text-tone-green-fg mt-0.5">Qualificado: vale assumir</p>}
       {lead.contactName && <p className="text-xs text-fg-muted truncate">{lead.contactName}</p>}
       <p className="text-sm font-medium text-fg mt-2">{formatCurrency(lead.value)}</p>
       <div className="flex items-center justify-between gap-2 mt-2">
@@ -50,11 +59,20 @@ function LeadCardView({ lead, dragging }: { lead: Lead; dragging?: boolean }) {
           </span>
         )}
       </div>
+      {lead.aiActive && onAssume && (
+        <button
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onAssume(lead) }}
+          className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold py-1.5"
+        >
+          <UserCheck size={13} /> Assumir
+        </button>
+      )}
     </div>
   )
 }
 
-function DraggableLead({ lead, onOpen }: { lead: Lead; onOpen: (id: string) => void }) {
+function DraggableLead({ lead, onOpen, onAssume }: { lead: Lead; onOpen: (id: string) => void; onAssume: (lead: Lead) => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: lead.id })
   return (
     <div
@@ -64,12 +82,12 @@ function DraggableLead({ lead, onOpen }: { lead: Lead; onOpen: (id: string) => v
       onClick={() => onOpen(lead.id)}
       className={cn('cursor-grab active:cursor-grabbing touch-none', isDragging && 'opacity-40')}
     >
-      <LeadCardView lead={lead} />
+      <LeadCardView lead={lead} onAssume={onAssume} />
     </div>
   )
 }
 
-function Column({ stage, leads, onOpen, onAdd }: { stage: Stage; leads: Lead[]; onOpen: (id: string) => void; onAdd?: () => void }) {
+function Column({ stage, leads, onOpen, onAdd, onAssume }: { stage: Stage; leads: Lead[]; onOpen: (id: string) => void; onAdd?: () => void; onAssume: (lead: Lead) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id })
   const total = leads.reduce((sum, l) => sum + l.value, 0)
 
@@ -98,7 +116,7 @@ function Column({ stage, leads, onOpen, onAdd }: { stage: Stage; leads: Lead[]; 
         style={{ borderTopColor: stage.color }}
       >
         {leads.map((lead) => (
-          <DraggableLead key={lead.id} lead={lead} onOpen={onOpen} />
+          <DraggableLead key={lead.id} lead={lead} onOpen={onOpen} onAssume={onAssume} />
         ))}
         {leads.length === 0 && <p className="text-xs text-fg-muted text-center py-6">Arraste leads para cá</p>}
       </div>
@@ -134,6 +152,11 @@ export default function PipelinePage() {
   }, [])
 
   useEffect(() => { void load() }, [load])
+  // Cards da IA entram e mudam sozinhos (lead novo, qualificação): atualiza em silêncio de tempos em tempos.
+  useEffect(() => {
+    const t = setInterval(() => void load(true), 20_000)
+    return () => clearInterval(t)
+  }, [load])
 
   const closeDrawer = useCallback(() => setOpenId(null), [])
 
@@ -166,6 +189,16 @@ export default function PipelinePage() {
     } catch (err) {
       setLeads(previous)
       toast.error(errMsg(err) ?? 'Não foi possível mover o lead')
+    }
+  }
+
+  async function assume(lead: Lead) {
+    try {
+      await aiApi.assumeLead(lead.id)
+      toast.success('Você assumiu o atendimento. A IA parou de responder.')
+      void load(true)
+    } catch (err) {
+      toast.error(errMsg(err) ?? 'Não foi possível assumir o lead')
     }
   }
 
@@ -243,6 +276,7 @@ export default function PipelinePage() {
                   stage={stage}
                   leads={byStage.get(stage.id) ?? []}
                   onOpen={setOpenId}
+                  onAssume={(l) => void assume(l)}
                   onAdd={stage.kind === 'OPEN' ? () => { setFormStageId(stage.id); setFormOpen(true) } : undefined}
                 />
               ))}

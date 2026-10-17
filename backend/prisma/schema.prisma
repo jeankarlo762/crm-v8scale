@@ -98,6 +98,14 @@ model Lead {
   archived       Boolean   @default(false)
   expectedCloseAt DateTime?
 
+  // Atendimento por IA: enquanto aiActive, a IA responde o lead no WhatsApp da loja; o vendedor "assume" e ela para.
+  // aiQualification = { interest, budget, tradeIn, financing, timeline, summary, openingMessage, ready } (resumo que a IA monta).
+  aiActive         Boolean   @default(false)
+  aiQualification  Json?
+  aiMessageCount   Int       @default(0)
+  aiAssumedAt      DateTime?
+  reviewRequestedAt DateTime?
+
   stageId        String
   stage          Stage     @relation(fields: [stageId], references: [id])
   stageChangedAt DateTime  @default(now())
@@ -107,6 +115,7 @@ model Lead {
   customer   Customer?
   activities Activity[]
   tasks      Task[]
+  aiMessages AiMessage[]
   prospect   Prospect? // origem na Prospecção, quando o lead veio de lá
 
   createdAt DateTime @default(now())
@@ -174,6 +183,61 @@ model Customer {
   contracts Contract[]
 
   @@index([archivedAt])
+}
+
+// ─── Atendimento por IA (SDR no WhatsApp da loja) ────────────────────────────
+
+// Configuração única (id = "default"). A IA só atende com enabled = true, WhatsApp conectado e ANTHROPIC_API_KEY.
+// distribution: ROUND_ROBIN (sequencial) | RANDOM | NONE (lead entra sem responsável).
+model AiConfig {
+  id                String   @id @default("default")
+  enabled           Boolean  @default(false)
+  aiStageId         String? // etapa "Atendimento IA": onde o lead cai
+  sellerStageId     String? // etapa "Atendimento do vendedor": para onde vai quando o vendedor assume
+  storeName         String?
+  instructions      String? // tom de voz, regras da loja, formas de pagamento, horário...
+  model             String   @default("claude-haiku-5-5")
+  distribution      String   @default("ROUND_ROBIN")
+  lastAssignedUserId String?
+  reviewLink        String? // link de avaliação do Google Meu Negócio
+  reviewMessage     String?
+  reviewAutoSend    Boolean  @default(false) // envia o pedido de avaliação ao ganhar o lead
+  updatedAt         DateTime @updatedAt
+}
+
+// Catálogo de veículos da loja: é o que a IA consulta para responder sobre os carros.
+// status: AVAILABLE | RESERVED | SOLD (a IA só oferece AVAILABLE)
+model Vehicle {
+  id           String   @id @default(cuid())
+  brand        String
+  model        String
+  version      String?
+  year         Int?
+  price        Decimal  @default(0)
+  km           Int?
+  color        String?
+  fuel         String?
+  transmission String?
+  plate        String?
+  description  String?
+  photoUrl     String?
+  status       String   @default("AVAILABLE")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status])
+}
+
+// Histórico da conversa entre o lead e a IA. role: USER | ASSISTANT
+model AiMessage {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([leadId, createdAt])
 }
 
 // ─── Contratos (geração em PDF + assinatura via ZapSign) ─────────────────────

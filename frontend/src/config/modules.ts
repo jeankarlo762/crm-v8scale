@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Kanban, Users, CheckSquare, UserCheck, UsersRound, Settings, Target, Megaphone, Trophy, BarChart3, Archive, Wallet, FileSignature, Plug, type LucideIcon,
+  LayoutDashboard, Kanban, Users, CheckSquare, UserCheck, UsersRound, Settings, Target, Megaphone, Trophy, BarChart3, Archive, Wallet, FileSignature, Plug, Bot, Car, type LucideIcon,
 } from 'lucide-react'
 import type { Role } from '../types'
 
@@ -31,6 +31,13 @@ export const navGroups: NavGroup[] = [
       { to: '/clientes', icon: UserCheck, label: 'Clientes', end: true },
       { to: '/clientes/arquivados', icon: Archive, label: 'Clientes arquivados' },
       { to: '/metas', icon: Trophy, label: 'Metas' },
+    ],
+  },
+  {
+    title: 'Atendimento IA',
+    items: [
+      { to: '/atendimento-ia', icon: Bot, label: 'Atendimento IA', roles: ['ADMIN', 'MANAGER'] },
+      { to: '/estoque', icon: Car, label: 'Estoque' },
     ],
   },
   {

@@ -20,6 +20,8 @@ import MetasPage from './pages/Metas'
 import RelatoriosPage from './pages/Relatorios'
 import FinanceiroPage from './pages/Financeiro'
 import ContratosPage from './pages/Contratos'
+import AtendimentoIAPage from './pages/AtendimentoIA'
+import VeiculosPage from './pages/Veiculos'
 import IntegracoesPage from './pages/Integracoes'
 import UsersPage from './pages/Users'
 import SettingsPage from './pages/Settings'
@@ -86,6 +88,8 @@ export default function App() {
           <Route path="/clientes/arquivados" element={<ClientesArquivadosPage />} />
           <Route path="/prospeccao" element={<RequireAuth roles={['ADMIN', 'MANAGER']}><ProspeccaoPage /></RequireAuth>} />
           <Route path="/campanhas" element={<RequireAuth roles={['ADMIN', 'MANAGER']}><CampanhasPage /></RequireAuth>} />
+          <Route path="/atendimento-ia" element={<RequireAuth roles={['ADMIN', 'MANAGER']}><AtendimentoIAPage /></RequireAuth>} />
+          <Route path="/estoque" element={<VeiculosPage />} />
           <Route path="/metas" element={<MetasPage />} />
           <Route path="/financeiro" element={<RequireAuth roles={['ADMIN', 'MANAGER']}><FinanceiroPage /></RequireAuth>} />
           <Route path="/contratos" element={<RequireAuth roles={['ADMIN', 'MANAGER']}><ContratosPage /></RequireAuth>} />

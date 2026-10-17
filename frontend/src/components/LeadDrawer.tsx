@@ -12,6 +12,7 @@ import { Spinner } from './ui/Spinner'
 import { ConfirmDialog } from './ui/ConfirmDialog'
 import { LeadFormModal } from './LeadFormModal'
 import { LostReasonModal } from './LostReasonModal'
+import { LeadAiPanel } from './LeadAiPanel'
 import * as api from '../api/commercial.api'
 import { useAuthStore } from '../store/auth.store'
 import { errMsg } from '../utils/apiError'
@@ -328,6 +329,8 @@ export function LeadDrawer({ leadId, stages, users, onClose, onChanged }: Props)
                   </div>
                 )}
               </div>
+
+              <LeadAiPanel lead={lead} canAssign={canAssign} onChanged={() => void refresh()} />
 
               {/* Dados */}
               <dl className="px-6 py-4 grid grid-cols-2 gap-x-4 gap-y-3 border-b border-border">

@@ -29,8 +29,10 @@ interface TenantWaState {
 const tenants = new Map<string, TenantWaState>()
 
 // Mensagens RECEBIDAS (de contatos, 1:1): quem se interessa (ex.: relatório de respostas da campanha) se registra aqui.
-// O handler recebe só o telefone (dígitos) de quem escreveu — nunca o texto.
-type IncomingHandler = (tenantId: string, phoneDigits: string) => void | Promise<void>
+// O handler recebe o telefone (dígitos) de quem escreveu; o texto e o nome do perfil vêm no 3º argumento e só
+// interessam a quem atende a conversa (ex.: IA). O rastreio de campanha ignora o 3º argumento.
+export interface IncomingInfo { text: string | null; pushName: string | null }
+type IncomingHandler = (tenantId: string, phoneDigits: string, info: IncomingInfo) => void | Promise<void>
 const incomingHandlers: IncomingHandler[] = []
 export function onIncomingMessage(handler: IncomingHandler): void {
   incomingHandlers.push(handler)
@@ -49,6 +51,18 @@ async function senderPhone(sock: any, key: { remoteJid?: string | null; remoteJi
     } catch { /* sem mapeamento: não dá para atribuir */ }
   }
   return null
+}
+
+// Texto de uma mensagem recebida (texto simples, resposta/encaminhada ou legenda de mídia); null para áudio, figurinha etc.
+function messageText(message: unknown): string | null {
+  const m = message as {
+    conversation?: string
+    extendedTextMessage?: { text?: string }
+    imageMessage?: { caption?: string }
+    videoMessage?: { caption?: string }
+  } | null | undefined
+  const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption
+  return text?.trim() || null
 }
 
 function getState(tenantId: string): TenantWaState {
@@ -154,15 +168,16 @@ export async function connect(tenantId: string): Promise<void> {
 
   sock.ev.on('creds.update', saveCreds)
 
-  sock.ev.on('messages.upsert', async (ev: { type?: string; messages?: Array<{ key: { fromMe?: boolean | null; remoteJid?: string | null; remoteJidAlt?: string | null }; message?: unknown }> }) => {
+  sock.ev.on('messages.upsert', async (ev: { type?: string; messages?: Array<{ key: { fromMe?: boolean | null; remoteJid?: string | null; remoteJidAlt?: string | null }; message?: unknown; pushName?: string | null }> }) => {
     if (ev.type !== 'notify' || incomingHandlers.length === 0) return
     for (const m of ev.messages ?? []) {
       // Só conversa 1:1 recebida (ignora o que a própria conta enviou, grupos, status e mensagens de protocolo).
       if (m.key.fromMe || !m.message || !m.key.remoteJid || m.key.remoteJid.endsWith('@g.us') || m.key.remoteJid === 'status@broadcast') continue
       const phone = await senderPhone(sock, m.key)
       if (!phone) continue
+      const info: IncomingInfo = { text: messageText(m.message), pushName: m.pushName?.trim() || null }
       for (const h of incomingHandlers) {
-        try { await h(tenantId, phone) } catch (err) { console.error('[WhatsApp] Erro ao processar mensagem recebida:', err) }
+        try { await h(tenantId, phone, info) } catch (err) { console.error('[WhatsApp] Erro ao processar mensagem recebida:', err) }
       }
     }
   })
