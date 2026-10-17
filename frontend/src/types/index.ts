@@ -41,17 +41,6 @@ export interface UserRef {
   name: string
 }
 
-export interface AiQualification {
-  interest: string | null
-  budget: string | null
-  tradeIn: string | null
-  financing: string | null
-  timeline: string | null
-  summary: string | null
-  openingMessage: string | null
-  ready: boolean
-}
-
 export interface Lead {
   id: string
   name: string
@@ -68,11 +57,6 @@ export interface Lead {
   lostReason: string | null
   archived: boolean
   expectedCloseAt: string | null
-  /** IA atendendo o lead no WhatsApp da loja (para quando o vendedor assume). */
-  aiActive: boolean
-  aiQualification: AiQualification | null
-  aiMessageCount: number
-  reviewRequestedAt: string | null
   stageId: string
   stage: Stage
   stageChangedAt: string

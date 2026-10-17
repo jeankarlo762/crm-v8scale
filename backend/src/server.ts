@@ -3,7 +3,6 @@ import { prisma } from './config/database'
 import { buildApp } from './app'
 import { initSeedIfNeeded } from './seed'
 import { startInvestigationWorker, stopInvestigationWorker } from './services/site-classify-queue.service'
-import { startAiAttendance } from './services/ai-attendance.service'
 import { backfillProspectStates } from './services/geo-uf.service'
 
 const app = buildApp()
@@ -13,7 +12,6 @@ async function start() {
     await initSeedIfNeeded(prisma)
     await app.listen({ port: env.PORT, host: '0.0.0.0' })
     app.log.info(`CRM V8 Scale rodando na porta ${env.PORT} (${env.NODE_ENV})`)
-    startAiAttendance() // IA que atende o WhatsApp da loja (só age com a configuração ligada)
     startInvestigationWorker() // fila persistente da investigação de site da Prospecção
     // Prospects antigos sem UF ganham a UF pela cidade (uma passada rápida, só nas linhas sem estado).
     backfillProspectStates()

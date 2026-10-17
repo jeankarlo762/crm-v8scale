@@ -44,17 +44,6 @@ backend pode rodar (a sessão e o loop de envio ficam em memória).
 - **Integrações** (ADMIN): token do ZapSign (criptografado no banco com `ENCRYPTION_KEY`) e a URL do webhook a cadastrar no ZapSign
 - Dados da contratada no PDF: `CONTRACT_COMPANY_NAME`, `CONTRACT_COMPANY_DOCUMENT`, `CONTRACT_COMPANY_ADDRESS`, `CONTRACT_COMPANY_CITY`
 
-### Atendimento por IA (ADMIN/MANAGER)
-
-Pensado para revendas de seminovos: a IA responde o lead em segundos (quem demora 5 min para responder perde boa parte das vendas) e entrega o lead qualificado ao vendedor.
-
-- **WhatsApp da loja** (QR Code, Baileys, tenant `ai-attendance`): é o número principal que recebe o tráfego. O vendedor **não** atende por ele; ele chama o lead pelo próprio celular, pelo link `wa.me` do CRM, já com a **abertura sugerida pela IA**
-- Ligando a IA em **Atendimento IA**, o funil ganha as etapas **Atendimento IA** (onde o lead cai) e **Atendimento do vendedor**
-- Lead novo é criado na etapa da IA e **distribuído** a um vendedor (sequencial, aleatório ou sem distribuição). O vendedor recebe um aviso com botão **Assumir**; ao assumir, a IA para de responder e o card vai para a etapa do vendedor. **Passar para outro vendedor** manda o lead ao próximo da fila
-- A IA (Claude) responde só com base no **Estoque** (catálogo de veículos disponíveis) e nas instruções da loja, e vai preenchendo a qualificação: carro de interesse, orçamento, troca, pagamento, prazo e um resumo
-- **Avaliação no Google Meu Negócio**: botão "Pedir avaliação" nos leads ganhos, ou envio automático ao ganhar (configurável)
-- Variáveis: `ANTHROPIC_API_KEY` (obrigatória para a IA responder), `ANTHROPIC_BASE_URL`, `AI_MAX_REPLIES_PER_LEAD` (padrão 40). Como o Baileys, só uma instância do backend pode rodar
-
 ### Perfis
 
 | Perfil | Acesso |

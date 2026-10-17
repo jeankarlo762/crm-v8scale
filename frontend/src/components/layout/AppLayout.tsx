@@ -4,7 +4,6 @@ import { LogOut, Menu, X, ChevronDown, UserCircle } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useAuth } from '../../hooks/useAuth'
 import { ThemeToggle } from '../ui/ThemeToggle'
-import { useAiLeadAlerts } from '../../hooks/useAiLeadAlerts'
 import { navGroups } from '../../config/modules'
 
 /** Marca da V8 Scale (public/logo.svg) sobre um quadro branco, para ler bem na barra escura. */
@@ -120,7 +119,6 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 
 export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
-  useAiLeadAlerts()
 
   return (
     <div className="min-h-screen flex bg-background text-fg">

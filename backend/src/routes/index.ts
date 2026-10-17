@@ -12,7 +12,6 @@ import { goalRoutes } from './goals.routes'
 import { reportRoutes } from './reports.routes'
 import { financialRoutes } from './financial.routes'
 import { contractRoutes } from './contracts.routes'
-import { aiRoutes } from './ai.routes'
 import { zapsignConfigRoutes, zapsignWebhookRoutes } from './zapsign.routes'
 
 // Cada módulo novo entra aqui com o seu próprio prefixo (ex.: /api/<modulo>),
@@ -28,7 +27,6 @@ export async function registerRoutes(app: FastifyInstance) {
   app.register(customerRoutes, { prefix: '/api/commercial/customers' })
   app.register(dashboardRoutes, { prefix: '/api/commercial/dashboard' })
   app.register(goalRoutes, { prefix: '/api/commercial/goals' })
-  app.register(aiRoutes, { prefix: '/api/commercial/ai' })
 
   // ── Prospecção e campanhas de WhatsApp ──
   app.register(nichoRoutes, { prefix: '/api/commercial/nichos' })

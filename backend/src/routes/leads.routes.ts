@@ -5,7 +5,6 @@ import { prisma } from '../config/database'
 import { authenticate, isRestricted, requireRole } from '../middlewares/auth'
 import { httpError } from '../utils/errors'
 import { audit } from '../utils/audit'
-import { maybeSendReviewOnWin } from '../services/ai-attendance.service'
 import { LIMITS, assertActiveUser, emailField, idParam, moneyField, optionalText, requiredText } from '../utils/validation'
 
 const dateField = z
@@ -286,7 +285,6 @@ export async function leadRoutes(app: FastifyInstance) {
       }
     })
 
-    if (target.kind === 'WON') void maybeSendReviewOnWin(id)
     return reply.send(serialize(await findScoped(request, id)))
   })
 

@@ -34,12 +34,6 @@ const envSchema = z.object({
   CONTRACT_COMPANY_CITY: z.preprocess(blankToUndefined, z.string().optional()),
 
 
-  // ── Atendimento por IA (SDR no WhatsApp da loja) ──
-  ANTHROPIC_API_KEY: z.preprocess(blankToUndefined, z.string().optional()),
-  ANTHROPIC_BASE_URL: z.preprocess(blankToUndefined, z.string().url().default('https://api.anthropic.com')),
-  // Teto de mensagens da IA por lead (protege o custo de um contato que nunca é assumido).
-  AI_MAX_REPLIES_PER_LEAD: z.coerce.number().int().min(1).default(40),
-
   // ── Prospecção (Google Places, Tavily, Meta) e investigação de site ──────────────────────────────────
   // Orçamento INTERNO das APIs externas. SEM default de franquia: sem a janela obrigatória (api-quota.service.ts →
   // REQUIRED_WINDOWS) o provedor fica BLOQUEADO, nunca sem teto. Google Places = duas operações com contadores separados.
